@@ -14,6 +14,19 @@ const postSchema = new mongoose.Schema(
     category: {
       type: String,
       required: true,
+      enum: [
+        "Agriculture",
+        "Army",
+        "HTML",
+        "Node JS",
+        "Bussiness",
+        "Accounting",
+        "Trading",
+        "Geography",
+        "Politics",
+        "Sports",
+        "Others",
+      ],
     },
     image: {
       type: String,
@@ -25,6 +38,12 @@ const postSchema = new mongoose.Schema(
       required: true,
     },
     comments: [{ type: mongoose.Schema.Types.ObjectId, ref: "Comment" }],
+    likes: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
   },
   {
     timestamps: true,
