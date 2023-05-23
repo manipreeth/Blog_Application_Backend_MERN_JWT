@@ -36,6 +36,15 @@ const userSchema = new mongoose.Schema(
     },
     posts: [{ type: mongoose.Schema.Types.ObjectId, ref: "Post" }],
     comments: [{ type: mongoose.Schema.Types.ObjectId, ref: "Comment" }],
+    postsLiked: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Post",
+      },
+    ],
+    isVerified: {
+      type: Boolean,
+    },
   },
   {
     timestamps: true,
