@@ -5,7 +5,9 @@ const storage = require("../../config/cloudinary");
 
 const {
   registerCtrl,
+  verifyEmailCtrl,
   loginCtrl,
+  verifyOtpCtrl,
   userPostsCtrl,
   profileCtrl,
   updateUserCtrl,
@@ -20,8 +22,14 @@ const upload = multer({ storage });
 //POST/register
 userRoutes.post("/register", registerCtrl);
 
+//POST/verifyEmail
+userRoutes.post("/verifyEmail/:id", verifyEmailCtrl);
+
 //POST/login
 userRoutes.post("/login", loginCtrl);
+
+//POST/verifyotp
+userRoutes.post("/verifyotp", verifyOtpCtrl);
 
 //GET/profile
 userRoutes.get("/profile", isLogin, profileCtrl);
