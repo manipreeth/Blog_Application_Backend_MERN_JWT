@@ -46,6 +46,6 @@ userRoutes.put(
 userRoutes.get("/posts", isLogin, userPostsCtrl);
 
 //GET/logout
-userRoutes.get("/logout", logoutCtrl);
+userRoutes.get("/logout", isLogin, logoutCtrl);
 
 module.exports = userRoutes;
