@@ -23,7 +23,7 @@ const registerCtrl = async (req, res, next) => {
     const generatedOTP = await generateOTP(userFound._id);
     const otpSent = await mailOTP(generatedOTP, userFound.email);
     if (otpSent) {
-      return next(appErr(`Verify your account ${userFound.fullname}`, 404));
+      return next(appErr(`Verify your account ${userFound.id}`, 404));
     }
   }
 
@@ -110,7 +110,7 @@ const loginCtrl = async (req, res, next) => {
     if (!userFound.isVerified) {
       const otpGenerated = await generateOTP(userFound._id);
       const otpSent = await mailOTP(otpGenerated, userFound.email);
-      return next(appErr(`Verify your account ${userFound.fullname}`, 404));
+      return next(appErr(`Verify your account ${userFound.id}`, 404));
     }
 
     // if user account is verified
