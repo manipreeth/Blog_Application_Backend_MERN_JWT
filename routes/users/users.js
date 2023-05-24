@@ -29,7 +29,7 @@ userRoutes.post("/verifyEmail/:id", verifyEmailCtrl);
 userRoutes.post("/login", loginCtrl);
 
 //POST/verifyotp
-userRoutes.post("/verifyotp", verifyOtpCtrl);
+userRoutes.post("/verifyotp", isLogin, verifyOtpCtrl);
 
 //GET/profile
 userRoutes.get("/profile", isLogin, profileCtrl);
