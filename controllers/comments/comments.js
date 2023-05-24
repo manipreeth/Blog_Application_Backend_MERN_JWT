@@ -38,6 +38,71 @@ const createCommentCtrl = async (req, res, next) => {
   }
 };
 
+const updateCommentCtrl = async (req, res, next) => {
+  const { message } = req.body;
+
+  if (!message) {
+    return next(appErr("Please add a Comment", 400));
+  }
+  try {
+    // find the comment
+    const comment = await Comment.findById(req.params.id);
+
+    if (!comment) {
+      return next(appErr("Comment posted by user not found", 404));
+    }
+
+    // check if the comment belongs to the user
+    if (comment.user.toString() !== req.user.id.toString()) {
+      return next(appErr("You are not allowed to update this comment", 403));
+    }
+
+    //update
+    const commentUpdated = await Comment.findByIdAndUpdate(
+      req.params.id,
+      {
+        message,
+      },
+      {
+        new: true,
+      }
+    );
+
+    res.json({
+      status: "success",
+      data: commentUpdated,
+    });
+  } catch (error) {
+    // res.json(error);
+    return next(appErr(error.message));
+  }
+};
+
+const deleteCommentCtrl = async (req, res, next) => {
+  try {
+    // find the comment
+    const comment = await Comment.findById(req.params.id);
+
+    // check if the comment belongs to the user
+    if (comment.user.toString() !== req.user.id.toString()) {
+      return next(appErr("You are not allowed to delete this comment", 403));
+    }
+
+    //delete comment
+    await Comment.findByIdAndDelete(req.params.id);
+
+    res.json({
+      status: "success",
+      data: "Comment has been deleted successfully ",
+    });
+  } catch (error) {
+    // res.json(error);
+    next(appErr(error.message));
+  }
+};
+
 module.exports = {
   createCommentCtrl,
+  updateCommentCtrl,
+  deleteCommentCtrl,
 };
