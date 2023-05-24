@@ -50,7 +50,7 @@ const fetchPostsCtrl = async (req, res, next) => {
   }
 };
 
-// We can acess the post with specify id of post in database
+// We can acess the post with specific id of post in database
 const fetchPostCtrl = async (req, res, next) => {
   try {
     // get the id from params
@@ -74,6 +74,7 @@ const fetchPostCtrl = async (req, res, next) => {
   }
 };
 
+// Delete post with specific id
 const deletePostCtrl = async (req, res, next) => {
   try {
     // find the post
@@ -96,9 +97,145 @@ const deletePostCtrl = async (req, res, next) => {
   }
 };
 
+// Update Post with specific id
+const updatepostCtrl = async (req, res, next) => {
+  const { title, description, category, image } = req.body;
+  try {
+    // find the post
+    const post = await Post.findById(req.params.id).populate("comments");
+
+    // check if the post belongs to the user
+    if (post.user.toString() !== req.user.id.toString()) {
+      return next(appErr("You are not allowed to update this post", 403));
+    }
+
+    //update
+    const postUpdated = await Post.findByIdAndUpdate(
+      req.params.id,
+      {
+        title,
+        description,
+        category,
+        image: req.file.path,
+      },
+      {
+        new: true,
+      }
+    );
+
+    res.json({
+      status: "success",
+      data: postUpdated,
+    });
+  } catch (error) {
+    res.json(error);
+  }
+};
+
+// Like Post with specific id
+const likepostCtrl = async (req, res, next) => {
+  // get user id
+  const userId = req.user.id;
+  // get post id
+  const postId = req.params.id;
+  // get post
+  const post = await Post.findById(postId);
+
+  if (post) {
+    // check if the post belongs to the user
+    if (post.user.toString() === userId) {
+      return next(appErr("You are not allowed to like this post", 403));
+    }
+
+    // add the user to the likes array
+    const postLiked = await Post.findByIdAndUpdate(
+      postId,
+      {
+        $push: {
+          likes: userId,
+        },
+      },
+      {
+        new: true,
+      }
+    );
+    // add post to array of posts liked by user
+    const userPost = await User.findByIdAndUpdate(
+      userId,
+      {
+        $push: { postsLiked: postId },
+      },
+      {
+        new: true,
+      }
+    );
+
+    res.json({
+      status: "success Liked",
+      data: postLiked,
+      user: userPost,
+    });
+  } else {
+    return next(appErr("Post not found", 404));
+  }
+};
+
+// Unlike Post with specific id
+const unlikepostCtrl = async (req, res, next) => {
+  // get user id
+  const userId = req.user.id;
+  // get post id
+  const postId = req.params.id;
+  // get post
+  const post = await Post.findById(postId);
+  if (post) {
+    // check if the post belongs to the user
+    if (post.user.toString() === userId) {
+      return next(appErr("You are not allowed to unlike this post", 403));
+    }
+
+    // remove like
+    const postUnliked = await Post.findByIdAndUpdate(
+      postId,
+      {
+        $pull: {
+          likes: userId,
+        },
+      },
+      {
+        new: true,
+      }
+    );
+
+    // remove post from posts liked by user
+    const userPost = await User.findByIdAndUpdate(
+      userId,
+      {
+        $pull: {
+          postsLiked: postId,
+        },
+      },
+      {
+        new: true,
+      }
+    );
+    // return post
+    return res.json({
+      status: "success",
+      data: postUnliked,
+      user: userPost,
+    });
+  } else {
+    return next(appErr("Post not found", 404));
+  }
+};
+
 module.exports = {
   createPostCtrl,
   fetchPostsCtrl,
   fetchPostCtrl,
   deletePostCtrl,
+  updatepostCtrl,
+  likepostCtrl,
+  unlikepostCtrl,
 };
