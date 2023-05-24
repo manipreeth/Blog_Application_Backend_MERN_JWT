@@ -3,20 +3,38 @@ const bcrypt = require("bcryptjs");
 const appErr = require("../../utils/appErr");
 const jwt = require("jsonwebtoken");
 
+// Import fom utils
+const generateOTP = require("../../utils/generateOTP");
+const mailOTP = require("../../utils/nodeMailer");
+const verifyOTP = require("../../utils/verifyOTP");
+// OTP Model
+const OtpVerification = require("../../model/OtpVerification");
+
+// Controllers
 const registerCtrl = async (req, res, next) => {
   const { fullname, email, password, mobile } = req.body;
   if (!fullname || !email || !password) {
     return next(appErr("All fields are required", 404));
   }
-  try {
-    // check if the user exist(email)
-    const userFound = await User.findOne({ email });
-    if (userFound) {
-      return next(appErr("User already Exist"));
-    }
 
-    // if user does not exist
-    else {
+  const userFound = await User.findOne({ email });
+  // check if user already exsist and account is not verified
+  if (userFound && !userFound.isVerified) {
+    const generatedOTP = await generateOTP(userFound._id);
+    const otpSent = await mailOTP(generatedOTP, userFound.email);
+    if (otpSent) {
+      return next(appErr(`Verify your account ${userFound.fullname}`, 404));
+    }
+  }
+
+  // check if the user exist(email)
+  if (userFound) {
+    return next(appErr("User already Exist"));
+  }
+
+  // if user does not exist
+  else {
+    try {
       // Hash password
       const salt = await bcrypt.genSalt(10);
       const passwordHashed = await bcrypt.hash(password, salt);
@@ -28,13 +46,51 @@ const registerCtrl = async (req, res, next) => {
         password: passwordHashed,
         mobile,
       });
+
+      const generatedOTP = await generateOTP(user._id);
+      const otpSent = await mailOTP(generatedOTP, user.email);
+
       res.json({
         status: "User Registered successfully",
         data: user,
+        otp: generatedOTP,
       });
+    } catch (error) {
+      return next(appErr(error.message));
+    }
+  }
+};
+
+const verifyEmailCtrl = async (req, res, next) => {
+  const { otp } = req.body;
+  const userId = req.params.id;
+
+  // if Otp didn't available from frontend
+  if (!otp) return next(appErr("Please enter otp", 404));
+
+  // If Otp available from frontend
+  try {
+    const verified = await verifyOTP(userId, otp);
+    if (verified === "Successful") {
+      // Find user
+      const user = await User.findById(userId);
+
+      // If user not found
+      if (!user) return next(appErr("User Not Found", 404));
+
+      // if user found then update user isVerified value
+      user.isVerified = true;
+      await user.save();
+
+      res.json({
+        status: "User verified successfully",
+        data: user,
+      });
+    } else {
+      return next(verified);
     }
   } catch (error) {
-    res.json(error.message);
+    return next(appErr(error.message));
   }
 };
 
@@ -49,12 +105,27 @@ const loginCtrl = async (req, res, next) => {
     if (!userFound) {
       return next(appErr("Invaild login credentials", 404));
     }
+
+    // if user account is not verified
+    if (!userFound.isVerified) {
+      const otpGenerated = await generateOTP(userFound._id);
+      const otpSent = await mailOTP(otpGenerated, userFound.email);
+      return next(appErr(`Verify your account ${userFound.fullname}`, 404));
+    }
+
+    // if user account is verified
     // verify password
     const isPasswordVaild = await bcrypt.compare(password, userFound.password);
 
     if (!isPasswordVaild) {
       return next(appErr("Invaild login credentials", 404));
     }
+
+    // if email and password is matched then Generate OTP by passing userid to generateOTP Function
+    const otpGenerated = await generateOTP(userFound._id);
+
+    // Pass generated Otp to mailOTP function to send it to user by nodemailer
+    await mailOTP(otpGenerated, userFound.email);
 
     //* create the JSON Web Token using userid
     const generateToken = (id) => {
@@ -67,15 +138,37 @@ const loginCtrl = async (req, res, next) => {
     res.json({
       status: "success",
       token: Token,
+      otp: otpGenerated,
     });
   } catch (error) {
     res.json(error.message);
   }
 };
 
+const verifyOtpCtrl = async (req, res, next) => {
+  const { otp } = req.body;
+
+  //get userId from request object
+  const userId = req.user.id;
+
+  if (!otp) {
+    return next(appErr("OTP is required", 404));
+  }
+  try {
+    const verified = await verifyOTP(userId, otp);
+    if (verified === "Successful") {
+      return res.json({ data: verified });
+    } else {
+      return next(verified);
+    }
+  } catch (error) {
+    return next(appErr(error));
+  }
+};
+
 const userPostsCtrl = async (req, res) => {
   try {
-    //get userId from session
+    //get userId from user property of request object
     const userId = req.user.id;
 
     //find the user
@@ -140,20 +233,28 @@ const updateUserCtrl = async (req, res, next) => {
   }
 };
 
-const logoutCtrl = async (req, res) => {
+const logoutCtrl = async (req, res, next) => {
+  //get userId from session
+  const userId = req.user.id;
+
   try {
-    req.session.destroy();
+    await OtpVerification.findOneAndDelete({
+      userId,
+    });
+
     res.json({
       status: "Logout Successful",
     });
   } catch (error) {
-    res.json(error);
+    return next(appErr(error.message));
   }
 };
 
 module.exports = {
   registerCtrl,
+  verifyEmailCtrl,
   loginCtrl,
+  verifyOtpCtrl,
   userPostsCtrl,
   profileCtrl,
   updateUserCtrl,
