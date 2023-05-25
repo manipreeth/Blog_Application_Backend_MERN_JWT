@@ -1,6 +1,8 @@
 require("dotenv").config(".env");
 const express = require("express");
 const app = express();
+const MongoStore = require("connect-mongo");
+const session = require("express-session");
 
 //* Routes import
 const userRoutes = require("./routes/users/users");
@@ -19,6 +21,19 @@ app.use(express.urlencoded({ extended: true }));
 
 const cors = require("cors");
 app.use(cors());
+
+//* Session Config
+app.use(
+  session({
+    secret: process.env.SESSION_KEY,
+    resave: false,
+    saveUninitialized: true,
+    store: new MongoStore({
+      mongoUrl: process.env.MONGO_URL,
+      ttl: 24 * 60 * 60, //1 day
+    }),
+  })
+);
 
 //* middlewares
 //*  ----- users route ----

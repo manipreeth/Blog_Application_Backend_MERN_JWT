@@ -151,6 +151,9 @@ const verifyOtpCtrl = async (req, res, next) => {
   //get userId from request object
   const userId = req.user.id;
 
+  //* Save the user into session
+  req.session.userAuth = userId;
+
   if (!otp) {
     return next(appErr("OTP is required", 404));
   }
@@ -212,9 +215,11 @@ const updateUserCtrl = async (req, res, next) => {
     // To check if username updated by user is whether already taken
     const usernameTaken = await User.findOne({ username });
 
-    // If the user is already taken it sends a error
-    if (usernameTaken._id.toString() !== user._id.toString()) {
-      return next(appErr("Username already taken", 400));
+    if (usernameTaken) {
+      // If the user is already taken it sends a error
+      if (usernameTaken._id.toString() !== userId.toString()) {
+        return next(appErr("Username already taken", 400));
+      }
     }
 
     // update user
@@ -241,6 +246,9 @@ const logoutCtrl = async (req, res, next) => {
     await OtpVerification.findOneAndDelete({
       userId,
     });
+
+    // Destroy the current session
+    await req.session.destroy();
 
     res.json({
       status: "Logout Successful",

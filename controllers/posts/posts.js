@@ -38,8 +38,12 @@ const createPostCtrl = async (req, res, next) => {
 
 // We can acess all the posts in database
 const fetchPostsCtrl = async (req, res, next) => {
+  const userId = req.user.id;
+
   try {
-    const posts = await Post.find().populate("comments").populate("user");
+    const posts = await Post.find({ user: { $ne: userId } })
+      .populate("comments")
+      .populate("user");
 
     res.json({
       status: "success",
@@ -65,9 +69,13 @@ const fetchPostCtrl = async (req, res, next) => {
       })
       .populate("user");
 
+    // get login user id
+    const userId = req.session.userAuth;
+
     res.json({
       status: "success",
       data: post,
+      userId: userId,
     });
   } catch (error) {
     return next(appErr(error.message));
@@ -184,8 +192,10 @@ const likepostCtrl = async (req, res, next) => {
 const unlikepostCtrl = async (req, res, next) => {
   // get user id
   const userId = req.user.id;
+
   // get post id
   const postId = req.params.id;
+
   // get post
   const post = await Post.findById(postId);
   if (post) {
