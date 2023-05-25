@@ -5,9 +5,7 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "server": "nodemon server.js",
-    "install": "npm install",
-    "build": "npm run build"
+    "server": "nodemon server.js"
   },
   "author": "Mani Preeth Bolusani",
   "license": "ISC",
