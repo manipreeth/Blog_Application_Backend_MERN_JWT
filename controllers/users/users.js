@@ -52,8 +52,7 @@ const registerCtrl = async (req, res, next) => {
 
       res.json({
         status: "User Registered successfully",
-        data: user,
-        otp: generatedOTP,
+        data: user._id,
       });
     } catch (error) {
       return next(appErr(error.message));
@@ -84,7 +83,6 @@ const verifyEmailCtrl = async (req, res, next) => {
 
       res.json({
         status: "User verified successfully",
-        data: user,
       });
     } else {
       return next(verified);
@@ -138,7 +136,6 @@ const loginCtrl = async (req, res, next) => {
     res.json({
       status: "success",
       token: Token,
-      otp: otpGenerated,
     });
   } catch (error) {
     res.json(error.message);
