@@ -245,10 +245,13 @@ const logoutCtrl = async (req, res, next) => {
     });
 
     // Destroy the current session
-    await req.session.destroy();
-
-    res.json({
-      status: "Logout Successful",
+    req.session.destroy((err) => {
+      if (err) {
+        return next(appErr(err.message));
+      }
+      return res.json({
+        status: "User Logged Out Successfully",
+      });
     });
   } catch (error) {
     return next(appErr(error.message));
