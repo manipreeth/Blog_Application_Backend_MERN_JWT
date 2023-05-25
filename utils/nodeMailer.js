@@ -21,7 +21,7 @@ const mailOTP = async (otp, userEmail) => {
     from: process.env.EMAIL,
     to: userEmail,
     subject: "OTP Verification",
-    text: "OTP : " + otp,
+    text: "Verify by entering this otp: " + otp,
   };
 
   // Send the otp to user
