@@ -23,7 +23,9 @@ const registerCtrl = async (req, res, next) => {
     const generatedOTP = await generateOTP(userFound._id);
     const otpSent = await mailOTP(generatedOTP, userFound.email);
     if (otpSent) {
-      return next(appErr(`Verify your account ${userFound.id}`, 404));
+      return res.json({
+        userId: userFound.id,
+      });
     }
   }
 
@@ -108,7 +110,9 @@ const loginCtrl = async (req, res, next) => {
     if (!userFound.isVerified) {
       const otpGenerated = await generateOTP(userFound._id);
       const otpSent = await mailOTP(otpGenerated, userFound.email);
-      return next(appErr(`Verify your account ${userFound.id}`, 404));
+      return res.json({
+        userId: userFound.id,
+      });
     }
 
     // if user account is verified
@@ -123,7 +127,7 @@ const loginCtrl = async (req, res, next) => {
     const otpGenerated = await generateOTP(userFound._id);
 
     // Pass generated Otp to mailOTP function to send it to user by nodemailer
-    await mailOTP(otpGenerated, userFound.email);
+    await mailOTP(otpGenerated, userFound.email, userFound.fullname);
 
     //* create the JSON Web Token using userid
     const generateToken = (id) => {
@@ -147,9 +151,6 @@ const verifyOtpCtrl = async (req, res, next) => {
 
   //get userId from request object
   const userId = req.user.id;
-
-  //* Save the user into session
-  req.session.userAuth = userId;
 
   if (!otp) {
     return next(appErr("OTP is required", 404));
