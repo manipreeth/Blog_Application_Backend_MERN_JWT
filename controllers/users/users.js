@@ -129,17 +129,9 @@ const loginCtrl = async (req, res, next) => {
     // Pass generated Otp to mailOTP function to send it to user by nodemailer
     await mailOTP(otpGenerated, userFound.email, userFound.fullname);
 
-    //* create the JSON Web Token using userid
-    const generateToken = (id) => {
-      // Sign JWT
-      return jwt.sign({ id }, "secretKey", { expiresIn: "24h" });
-    };
-    // Generate JWT
-    const Token = generateToken(userFound._id);
-
     res.json({
       status: "success",
-      token: Token,
+      user: userFound._id,
     });
   } catch (error) {
     res.json(error.message);
@@ -149,8 +141,8 @@ const loginCtrl = async (req, res, next) => {
 const verifyOtpCtrl = async (req, res, next) => {
   const { otp } = req.body;
 
-  //get userId from request object
-  const userId = req.user.id;
+  //get userId from params
+  const userId = req.params.id;
 
   if (!otp) {
     return next(appErr("OTP is required", 404));
@@ -158,7 +150,21 @@ const verifyOtpCtrl = async (req, res, next) => {
   try {
     const verified = await verifyOTP(userId, otp);
     if (verified === "Successful") {
-      return res.json({ data: verified });
+      //* create the JSON Web Token using userid
+      const generateToken = (id) => {
+        // Sign JWT
+        return jwt.sign({ id }, "secretKey", { expiresIn: "24h" });
+      };
+      // Generate JWT
+      const Token = generateToken(userId);
+
+      // store session userAuth
+      req.session.userAuth = userId;
+
+      return res.json({
+        data: verified,
+        token: Token,
+      });
     } else {
       return next(verified);
     }
