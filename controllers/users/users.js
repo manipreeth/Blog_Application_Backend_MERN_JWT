@@ -158,9 +158,6 @@ const verifyOtpCtrl = async (req, res, next) => {
       // Generate JWT
       const Token = generateToken(userId);
 
-      // store session userAuth
-      req.session.userAuth = userId;
-
       return res.json({
         data: verified,
         token: Token,
@@ -243,7 +240,7 @@ const updateUserCtrl = async (req, res, next) => {
 };
 
 const logoutCtrl = async (req, res, next) => {
-  //get userId from session
+  //get userId from token
   const userId = req.user.id;
 
   try {
@@ -251,14 +248,8 @@ const logoutCtrl = async (req, res, next) => {
       userId,
     });
 
-    // Destroy the current session
-    req.session.destroy((err) => {
-      if (err) {
-        return next(appErr(err.message));
-      }
-      return res.json({
-        status: "User Logged Out Successfully",
-      });
+    return res.json({
+      status: "User Logged Out Successfully",
     });
   } catch (error) {
     return next(appErr(error.message));
