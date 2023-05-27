@@ -8,6 +8,7 @@ const {
   updatepostCtrl,
   likepostCtrl,
   unlikepostCtrl,
+  viewPostCtrl,
 } = require("../../controllers/posts/posts");
 
 const multer = require("multer");
@@ -24,7 +25,7 @@ postRouter.post("/", isLogin, upload.single("postImage"), createPostCtrl);
 postRouter.get("/", isLogin, fetchPostsCtrl);
 
 //GET/:id
-postRouter.get("/:id", fetchPostCtrl);
+postRouter.get("/:id", isLogin, fetchPostCtrl);
 
 //DELETE/:id
 postRouter.delete("/:id", isLogin, deletePostCtrl);
@@ -39,5 +40,8 @@ postRouter.post("/like/:id", isLogin, likepostCtrl);
 // Post/:id
 // route to unlike post
 postRouter.post("/unlike/:id", isLogin, unlikepostCtrl);
+
+// route to visit post when user share URL.
+postRouter.get("/viewPost/:id", viewPostCtrl);
 
 module.exports = postRouter;
