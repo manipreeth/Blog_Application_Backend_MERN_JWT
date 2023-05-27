@@ -37,8 +37,8 @@ userRoutes.get("/profile", isLogin, profileCtrl);
 //PUT/update user details
 userRoutes.put(
   "/update",
-  upload.single("profileImage"),
   isLogin,
+  upload.single("profileImage"),
   updateUserCtrl
 );
 
