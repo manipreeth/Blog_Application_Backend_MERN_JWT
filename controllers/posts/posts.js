@@ -59,7 +59,8 @@ const fetchPostCtrl = async (req, res, next) => {
   try {
     // get the id from params
     const id = req.params.id;
-    // find the post
+
+    // find the post with id
     const post = await Post.findById(id)
       .populate({
         path: "comments",
@@ -69,8 +70,8 @@ const fetchPostCtrl = async (req, res, next) => {
       })
       .populate("user");
 
-    // get login user id
-    const userId = req.session.userAuth;
+    // get the login user id from JSON WEB TOKEN
+    const userId = req.user.id;
 
     res.json({
       status: "success",
@@ -240,6 +241,31 @@ const unlikepostCtrl = async (req, res, next) => {
   }
 };
 
+// viewpost of specific id when user share url
+const viewPostCtrl = async (req, res, next) => {
+  try {
+    // get the id from params
+    const id = req.params.id;
+
+    // find the post
+    const post = await Post.findById(id)
+      .populate({
+        path: "comments",
+        populate: {
+          path: "user",
+        },
+      })
+      .populate("user");
+
+    return res.json({
+      status: "success",
+      data: post,
+    });
+  } catch (error) {
+    return next(appErr(error.message));
+  }
+};
+
 module.exports = {
   createPostCtrl,
   fetchPostsCtrl,
@@ -248,4 +274,5 @@ module.exports = {
   updatepostCtrl,
   likepostCtrl,
   unlikepostCtrl,
+  viewPostCtrl,
 };
