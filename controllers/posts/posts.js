@@ -195,12 +195,7 @@ const unlikepostCtrl = async (req, res, next) => {
   // get post
   const post = await Post.findById(postId);
   if (post) {
-    // check if the post belongs to the user
-    if (post.user.toString() === userId) {
-      return next(appErr("You are not allowed to unlike this post", 403));
-    }
-
-    // remove like
+    // remove the user from the likes array
     const postUnliked = await Post.findByIdAndUpdate(
       postId,
       {
