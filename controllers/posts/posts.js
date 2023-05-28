@@ -151,11 +151,6 @@ const likepostCtrl = async (req, res, next) => {
   const post = await Post.findById(postId);
 
   if (post) {
-    // check if the post belongs to the user
-    if (post.user.toString() === userId) {
-      return next(appErr("You are not allowed to like this post", 403));
-    }
-
     // add the user to the likes array
     const postLiked = await Post.findByIdAndUpdate(
       postId,
